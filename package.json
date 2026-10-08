@@ -1,0 +1,43 @@
+{
+  "name": "sourcery",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "worker": "node --env-file=.env.local --import tsx worker/index.ts",
+    "dev:all": "concurrently -n web,worker \"next dev\" \"node --env-file=.env.local --import tsx worker/index.ts\"",
+    "build": "next build",
+    "start": "next start",
+    "test:pipeline": "node --env-file=.env.local --import tsx scripts/smoke-pipeline.ts",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^4.0.90",
+    "@ai-sdk/groq": "^4.0.57",
+    "@ai-sdk/openai": "^4.0.86",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.3",
+    "ai": "^7.0.130",
+    "mammoth": "^1.13.0",
+    "next": "16.4.0",
+    "pg-boss": "^12.37.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
+    "unpdf": "^1.8.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "concurrently": "^10.0.5",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.15",
+    "typescript": "^5"
+  }
+}
