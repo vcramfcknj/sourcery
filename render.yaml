@@ -8,7 +8,9 @@ services:
   - type: worker # Render "Background Worker": kept alive, no public HTTP
     name: sourcery-worker
     runtime: node
-    plan: free # if free workers aren't offered in your region, pick "starter"
+    # Background workers have NO free plan on Render; the minimum is
+    # 0.5c-512mb (~$7/mo). `free` here is rejected and fails the Blueprint sync.
+    plan: 0.5c-512mb
     region: singapore # match the Supabase DB region (ap-southeast-1) to cut latency
     branch: main
     buildCommand: npm ci
