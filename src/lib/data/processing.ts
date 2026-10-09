@@ -1,7 +1,9 @@
 import 'server-only'
+import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { enqueueExtraction, enqueueGeneration } from '@/lib/jobs/queue'
+import { drainQueue } from '@/lib/jobs/drain'
 import {
   DOCUMENTS_BUCKET,
   LIMITS,
@@ -221,6 +223,11 @@ export async function startProcessing(reviewerId: string): Promise<{ ok: true; j
     // Job row failed but queue is what matters; still non-fatal. Logged server-side.
     console.error('generation_jobs insert failed:', jobErr)
   }
+  // Serverless worker replacement: kick the queue immediately after the
+  // response goes out, so the user does not wait for the next poll. On Vercel
+  // this runs inside the SAME 300s function budget; locally it harmlessly
+  // races with `npm run worker` (pg-boss fetch is atomic per job).
+  after(() => drainQueue().catch((err) => console.error('[after:extract]', err)))
   return { ok: true, jobId: jobId ?? job?.id ?? null }
 }
 
@@ -269,6 +276,10 @@ export async function startGeneration(
 
   const jobId = await enqueueGeneration({ reviewerId, userId: user.id })
   if (jobErr) console.error('generation_jobs insert failed:', jobErr)
+  // Same after()-based drain: start generation immediately, not on the
+  // next 2s poll. If this callback is interrupted, the status poll drains
+  // the same queue every 2s afterwards.
+  after(() => drainQueue().catch((err) => console.error('[after:generate]', err)))
   return { ok: true, jobId: jobId ?? job?.id ?? null }
 }
 

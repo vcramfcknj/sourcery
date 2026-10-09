@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev",
     "worker": "node --env-file=.env.local --import tsx worker/index.ts",
-    "worker:start": "node --import tsx worker/index.ts",
     "dev:all": "concurrently -n web,worker \"next dev\" \"node --env-file=.env.local --import tsx worker/index.ts\"",
     "build": "next build",
     "start": "next start",
