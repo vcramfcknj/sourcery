@@ -187,7 +187,7 @@ export const DECK_STAGE_LABELS: Partial<Record<ExtractionStage, string>> = {
 /** User-facing labels for the processing screen (PRD 29.3). */
 export const STAGE_LABELS: Record<ExtractionStage, string> = {
   queued: 'Queued',
-  downloading: 'Reading your material',
+  downloading: 'Fetching your file',
   extracting: 'Reading your material',
   structuring: 'Organizing content',
   quality_check: 'Checking text quality',

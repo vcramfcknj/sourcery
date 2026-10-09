@@ -108,9 +108,11 @@ export function ResultsScreen({ summary }: { summary: AttemptSummary }) {
             </dt>
             <dd className="font-bold tabular-nums">
               {incorrect}
-              <span className="ml-1 text-xs font-normal opacity-80">
-                {answeredIncorrect} wrong{skipped > 0 ? `, ${skipped} skipped` : ''}
-              </span>
+              {skipped > 0 && (
+                <span className="ml-1 text-xs font-normal opacity-80">
+                  {answeredIncorrect} wrong, {skipped} skipped
+                </span>
+              )}
             </dd>
           </div>
           {skipped > 0 && (

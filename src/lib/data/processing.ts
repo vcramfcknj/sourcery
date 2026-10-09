@@ -266,7 +266,12 @@ export async function startGeneration(
     .eq('id', reviewerId)
     .maybeSingle()
   if (!reviewer) return { ok: false, error: 'Reviewer not found.' }
-  if (reviewer.status !== 'awaiting_verification') return { ok: true, jobId: null }
+  // Idempotent for in-flight/finished work, but a 'failed' reviewer (e.g. a
+  // transient enqueue error) must be retryable from the checkpoint, otherwise
+  // this returns ok:true and the "Generate questions" button silently lies.
+  if (reviewer.status !== 'awaiting_verification' && reviewer.status !== 'failed') {
+    return { ok: true, jobId: null }
+  }
 
   const admin = createAdminClient()
   // Enqueue before advancing state (same orphan-hang guard as extraction).

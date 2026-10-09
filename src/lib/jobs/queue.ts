@@ -43,6 +43,28 @@ export interface ExtractJobPayload {
 }
 
 /**
+ * Enqueue with a short bounded retry. On Vercel serverless a cold-start or a
+ * momentary pooler blip can make a single boss.send() throw, and the caller
+ * treats a null jobId as a permanent reviewer 'failed'. A couple of quick
+ * retries absorb those transient errors so a healthy submit isn't lost.
+ */
+async function sendWithRetry(boss: PgBoss, name: string, payload: object): Promise<string> {
+  const attempts = 3
+  let lastErr: unknown
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const id = await boss.send(name, payload)
+      if (id) return id
+      lastErr = new Error(`pg-boss send(${name}) returned no job id`)
+    } catch (err) {
+      lastErr = err
+    }
+    if (i < attempts - 1) await new Promise((r) => setTimeout(r, 200 * (i + 1)))
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(`Failed to enqueue ${name}`)
+}
+
+/**
  * Enqueue document extraction. Idempotency (PRD 13.2) is enforced by the
  * worker + status guards, not the queue: a document already extracted or
  * already past 'uploaded'/'processing' is a no-op inside the handler, so a
@@ -50,7 +72,7 @@ export interface ExtractJobPayload {
  */
 export async function enqueueExtraction(payload: ExtractJobPayload): Promise<string | null> {
   const boss = await getBoss()
-  return boss.send(JOBS.EXTRACT_DOCUMENT, payload)
+  return sendWithRetry(boss, JOBS.EXTRACT_DOCUMENT, payload)
 }
 
 export interface GenerateJobPayload {
@@ -65,5 +87,5 @@ export interface GenerateJobPayload {
  */
 export async function enqueueGeneration(payload: GenerateJobPayload): Promise<string | null> {
   const boss = await getBoss()
-  return boss.send(JOBS.GENERATE_QUESTIONS, payload)
+  return sendWithRetry(boss, JOBS.GENERATE_QUESTIONS, payload)
 }
