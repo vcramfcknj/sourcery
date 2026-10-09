@@ -204,17 +204,28 @@ export function ProcessingScreen({ reviewerId }: { reviewerId: string }) {
       </ol>
 
       {/* Honest overrun notice: we never fake progress, so we say what this
-          usually means and how to fix it. */}
+          usually means. The dev hint (start the worker) only applies to local
+          dev; on the deployed app there is no separate worker to start, so we
+          point at the real remedy instead of a meaningless npm command. */}
       {overrun && (
         <p
           role="status"
           className="mt-6 rounded-2xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning"
         >
-          Taking longer than usual. If it&apos;s still going in a minute or two, the background
-          worker most likely isn&apos;t running — start everything with{' '}
-          <code className="rounded bg-background px-1.5 py-0.5 text-xs">npm run dev:all</code> and
-          look for the <span className="font-medium">&ldquo;[worker] listening&hellip;&rdquo;</span>{' '}
-          line.
+          {process.env.NODE_ENV === 'development' ? (
+            <>
+              Taking longer than usual. If it&apos;s still going in a minute or two, the background
+              worker most likely isn&apos;t running — start everything with{' '}
+              <code className="rounded bg-background px-1.5 py-0.5 text-xs">npm run dev:all</code> and
+              look for the <span className="font-medium">&ldquo;[worker] listening&hellip;&rdquo;</span>{' '}
+              line.
+            </>
+          ) : (
+            <>
+              Taking longer than usual — the processing queue may be busy. This normally clears
+              within a minute or two. If it stays stuck, go back and create the reviewer again.
+            </>
+          )}
         </p>
       )}
     </div>

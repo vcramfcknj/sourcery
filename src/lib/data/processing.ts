@@ -200,13 +200,30 @@ export async function startProcessing(reviewerId: string): Promise<{ ok: true; j
   const exists = (listed ?? []).some((o) => o.name === base)
   if (!exists) return { ok: false, error: 'Upload did not complete. Please choose the file again.' }
 
-  // generation_jobs is service-role-write-only too (SELECT-only RLS); the
-  // reviewer ownership was just verified via the RLS-scoped read above.
-  const { data: job, error: jobErr } = await admin
+  // Enqueue FIRST, before flipping the reviewer. A thrown pg-boss error here
+  // (cold-start connection, pooler blip) must NOT leave a reviewer parked in
+  // 'processing': with no job queued, the status API only ever echoes the
+  // queued stage and the screen hangs forever with no path out.
+  let jobId: string | null
+  try {
+    jobId = await enqueueExtraction({ reviewerId, documentId: doc.id, userId: user.id })
+  } catch (err) {
+    console.error('[enqueue:extract] failed:', err)
+    jobId = null
+  }
+  if (!jobId) {
+    // Surface a real, actionable failure instead of a silent zombie.
+    await supabase.from('reviewers').update({ status: 'failed' }).eq('id', reviewerId)
+    return { ok: false, error: 'Could not start processing. Please try again.' }
+  }
+
+  // Only now that the job is genuinely queued do we record the job row and
+  // advance the reviewer. generation_jobs is service-role-write-only (SELECT-
+  // only RLS); reviewer ownership was verified via the RLS-scoped read above.
+  const { error: jobErr } = await admin
     .from('generation_jobs')
     .insert({ reviewer_id: reviewerId, status: 'queued', stage: 'queued' })
-    .select('id')
-    .single()
+  if (jobErr) console.error('generation_jobs insert failed:', jobErr)
 
   const { error: statusErr } = await supabase
     .from('reviewers')
@@ -214,21 +231,12 @@ export async function startProcessing(reviewerId: string): Promise<{ ok: true; j
     .eq('id', reviewerId)
   if (statusErr) return { ok: false, error: 'Could not start processing. Please try again.' }
 
-  const jobId = await enqueueExtraction({
-    reviewerId,
-    documentId: doc.id,
-    userId: user.id,
-  })
-  if (jobErr) {
-    // Job row failed but queue is what matters; still non-fatal. Logged server-side.
-    console.error('generation_jobs insert failed:', jobErr)
-  }
   // Serverless worker replacement: kick the queue immediately after the
   // response goes out, so the user does not wait for the next poll. On Vercel
   // this runs inside the SAME 300s function budget; locally it harmlessly
   // races with `npm run worker` (pg-boss fetch is atomic per job).
   after(() => drainQueue().catch((err) => console.error('[after:extract]', err)))
-  return { ok: true, jobId: jobId ?? job?.id ?? null }
+  return { ok: true, jobId }
 }
 
 function folderOf(path: string): string {
@@ -261,12 +269,24 @@ export async function startGeneration(
   if (reviewer.status !== 'awaiting_verification') return { ok: true, jobId: null }
 
   const admin = createAdminClient()
+  // Enqueue before advancing state (same orphan-hang guard as extraction).
+  let jobId: string | null
+  try {
+    jobId = await enqueueGeneration({ reviewerId, userId: user.id })
+  } catch (err) {
+    console.error('[enqueue:generate] failed:', err)
+    jobId = null
+  }
+  if (!jobId) {
+    await supabase.from('reviewers').update({ status: 'failed' }).eq('id', reviewerId)
+    return { ok: false, error: 'Could not start generation. Please try again.' }
+  }
+
   // generation_jobs is service-role-write-only (SELECT-only RLS).
-  const { data: job, error: jobErr } = await admin
+  const { error: jobErr } = await admin
     .from('generation_jobs')
     .insert({ reviewer_id: reviewerId, status: 'queued', stage: 'planning' })
-    .select('id')
-    .single()
+  if (jobErr) console.error('generation_jobs insert failed:', jobErr)
 
   const { error: statusErr } = await supabase
     .from('reviewers')
@@ -274,13 +294,11 @@ export async function startGeneration(
     .eq('id', reviewerId)
   if (statusErr) return { ok: false, error: 'Could not start generation. Please try again.' }
 
-  const jobId = await enqueueGeneration({ reviewerId, userId: user.id })
-  if (jobErr) console.error('generation_jobs insert failed:', jobErr)
   // Same after()-based drain: start generation immediately, not on the
   // next 2s poll. If this callback is interrupted, the status poll drains
   // the same queue every 2s afterwards.
   after(() => drainQueue().catch((err) => console.error('[after:generate]', err)))
-  return { ok: true, jobId: jobId ?? job?.id ?? null }
+  return { ok: true, jobId }
 }
 
 function guessMimeType(fileName: string): string {
