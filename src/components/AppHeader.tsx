@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { signOut } from '@/app/actions/auth'
 import { useDismissOnOutside } from '@/lib/useDismissOnOutside'
 
@@ -19,6 +19,11 @@ export function AppHeader({
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useDismissOnOutside<HTMLDivElement>(menuOpen, () => setMenuOpen(false))
+  // Logout is invoked imperatively (not via native <form> submit): the menu
+  // unmounts the instant it is clicked, which cancels a native form submission
+  // ("Form submission canceled because the form is not connected") and left the
+  // session intact. A transition-called Server Action fires regardless.
+  const [isLoggingOut, startLogout] = useTransition()
   const greeting = (displayName ?? email.split('@')[0]) || 'there'
   const initial = greeting.charAt(0).toUpperCase()
 
@@ -56,7 +61,7 @@ export function AppHeader({
               aria-haspopup="menu"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((o) => !o)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-periwinkle font-display text-sm font-bold text-sidebar shadow-clay transition hover:brightness-105"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-periwinkle font-display text-sm font-bold text-sidebar shadow-clay transition hover:brightness-105"
             >
               {initial}
             </button>
@@ -72,7 +77,7 @@ export function AppHeader({
                   href="/reviewers/new"
                   role="menuitem"
                   onClick={() => setMenuOpen(false)}
-                  className="block w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-background"
+                  className="flex min-h-[44px] w-full items-center rounded-xl px-3 text-left text-sm font-medium text-foreground transition hover:bg-background"
                 >
                   Create reviewer
                 </Link>
@@ -80,7 +85,7 @@ export function AppHeader({
                   href="/flashcards/new"
                   role="menuitem"
                   onClick={() => setMenuOpen(false)}
-                  className="block w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-background"
+                  className="flex min-h-[44px] w-full items-center rounded-xl px-3 text-left text-sm font-medium text-foreground transition hover:bg-background"
                 >
                   New flashcard deck
                 </Link>
@@ -88,20 +93,19 @@ export function AppHeader({
                   href="/settings"
                   role="menuitem"
                   onClick={() => setMenuOpen(false)}
-                  className="block w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-background"
+                  className="flex min-h-[44px] w-full items-center rounded-xl px-3 text-left text-sm font-medium text-foreground transition hover:bg-background"
                 >
                   Settings
                 </Link>
-                <form action={signOut}>
-                  <button
-                    type="submit"
-                    role="menuitem"
-                    onClick={() => setMenuOpen(false)}
-                    className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-danger transition hover:bg-background"
-                  >
-                    Log out
-                  </button>
-                </form>
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={isLoggingOut}
+                  onClick={() => startLogout(async () => { await signOut() })}
+                  className="flex min-h-[44px] w-full items-center rounded-xl px-3 text-left text-sm font-medium text-danger transition hover:bg-background disabled:opacity-60"
+                >
+                  {isLoggingOut ? 'Logging out…' : 'Log out'}
+                </button>
               </div>
             )}
           </div>

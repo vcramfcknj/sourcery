@@ -26,7 +26,7 @@ export function CreateScreenShell({
     <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start">
       <div className="mx-auto w-full max-w-3xl xl:mx-0">
         <div className="mb-6">
-          <Link href={backHref} className="text-sm text-muted hover:text-foreground">
+          <Link href={backHref} className="-ml-2 inline-flex min-h-[44px] items-center rounded-lg px-2 text-sm text-muted hover:text-foreground">
             ← Back to dashboard
           </Link>
           <h1 className="mt-2 font-display text-2xl font-extrabold">{title}</h1>

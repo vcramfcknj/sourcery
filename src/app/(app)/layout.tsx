@@ -35,7 +35,7 @@ export default async function AppLayout({
         {/* Workspace fills large screens: individual pages cap their own
             reading width; this bound only stops lines running edge-to-edge
             on ultrawide monitors. */}
-        <main id="main" className="mx-auto w-full max-w-[1600px] flex-1 px-5 pt-8 pb-28 sm:px-8 md:pb-8 print:max-w-none print:px-0 print:py-2">
+        <main id="main" className="mx-auto w-full max-w-[1600px] flex-1 px-5 pt-8 pb-32 sm:px-8 md:pb-8 print:max-w-none print:px-0 print:py-2">
           <RouteTransition>{children}</RouteTransition>
         </main>
       </div>

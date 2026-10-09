@@ -281,7 +281,7 @@ export function CreateReviewerForm({
                   type="button"
                   onClick={() => setCount(c)}
                   aria-pressed={count === c}
-                  className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
+                  className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border px-4 py-2 text-sm font-medium transition ${
                     count === c
                       ? 'border-brand bg-brand text-white shadow-soft'
                       : 'border-line bg-surface hover:border-brand'
@@ -300,7 +300,7 @@ export function CreateReviewerForm({
               {QUESTION_TYPES.map((t) => (
                 <label
                   key={t}
-                  className={`flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition ${
+                  className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition ${
                     types.includes(t) ? 'border-brand bg-brand/5' : 'border-line bg-surface'
                   }`}
                 >
