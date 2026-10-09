@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { NAV } from './nav-items'
 
 /**
  * Icon rail (reference dashboard): deep-indigo sidebar, brand mark on top,
@@ -20,64 +21,10 @@ import { useState } from 'react'
  * collapses - the visual rail is the INNER element that animates its width
  * inside that reserved column. This keeps the forms pinned where they are
  * whether the rail is open or collapsed (user request).
+ *
+ * Below `md` this rail is hidden entirely; the mobile hamburger + off-canvas
+ * drawer (MobileNav) is the touch navigation for phones/tablets.
  */
-
-type NavItem = {
-  href: string
-  label: string
-  match: (p: string) => boolean
-  icon: React.ReactNode
-}
-
-const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' } as const
-
-const NAV: NavItem[] = [
-  {
-    href: '/dashboard',
-    label: 'Dashboard',
-    match: (p) => p === '/dashboard' || p === '/',
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" aria-hidden {...stroke}>
-        <path d="M3 11.5 12 4l9 7.5" />
-        <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
-      </svg>
-    ),
-  },
-  {
-    href: '/reviewers/new',
-    label: 'Create reviewer',
-    match: (p) => p === '/reviewers/new',
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" aria-hidden {...stroke}>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 8v8M8 12h8" />
-      </svg>
-    ),
-  },
-  {
-    href: '/flashcards/new',
-    label: 'New flashcard deck',
-    match: (p) => p === '/flashcards/new' || p.startsWith('/flashcards/'),
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" aria-hidden {...stroke}>
-        <rect x="3" y="7.5" width="13" height="12" rx="2.5" />
-        <path d="M7 4.5h11a2.5 2.5 0 0 1 2.5 2.5v9" />
-        <path d="M6.5 11.5h6.5M6.5 15h4" />
-      </svg>
-    ),
-  },
-  {
-    href: '/settings',
-    label: 'Settings',
-    match: (p) => p.startsWith('/settings'),
-    icon: (
-      <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" aria-hidden {...stroke}>
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.03 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56h.01a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.03Z" />
-      </svg>
-    ),
-  },
-]
 
 export function Sidebar() {
   const pathname = usePathname()

@@ -25,7 +25,8 @@ export function AppHeader({
   return (
     <header className="sticky top-0 z-10 border-b border-line bg-background/80 backdrop-blur print:hidden">
       <div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-5 py-4 sm:px-8">
-        {/* Mobile brand (sidebar is hidden below md) */}
+        {/* Mobile brand (sidebar is hidden below md; nav lives in the
+            bottom tab bar rendered by the app layout). */}
         <Link
           href="/dashboard"
           aria-label="Sourcery home"

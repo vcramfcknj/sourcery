@@ -2,6 +2,7 @@ import { requireUser } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { AppHeader } from '@/components/AppHeader'
 import { Sidebar } from '@/components/Sidebar'
+import { MobileTabBar } from '@/components/MobileTabBar'
 import { RouteTransition } from '@/components/RouteTransition'
 
 export default async function AppLayout({
@@ -34,10 +35,13 @@ export default async function AppLayout({
         {/* Workspace fills large screens: individual pages cap their own
             reading width; this bound only stops lines running edge-to-edge
             on ultrawide monitors. */}
-        <main id="main" className="mx-auto w-full max-w-[1600px] flex-1 px-5 py-8 sm:px-8 print:max-w-none print:px-0 print:py-2">
+        <main id="main" className="mx-auto w-full max-w-[1600px] flex-1 px-5 pt-8 pb-28 sm:px-8 md:pb-8 print:max-w-none print:px-0 print:py-2">
           <RouteTransition>{children}</RouteTransition>
         </main>
       </div>
+      {/* Mobile bottom navigation (hidden from `md` up, where the Sidebar
+          rail takes over). Extra pb on <main> keeps content clear of it. */}
+      <MobileTabBar />
     </div>
   )
 }
