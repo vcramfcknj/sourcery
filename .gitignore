@@ -50,3 +50,6 @@ next-env.d.ts
 # local data dumps / scratch artifacts
 /*.csv
 /backup*.sql
+
+# vercel deploy scratch (temporary CLI helper scripts)
+.vercel-tmp/

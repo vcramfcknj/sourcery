@@ -1,0 +1,34 @@
+# Render Blueprint for the Sourcery background worker.
+#
+# The web app runs on Vercel; this always-on process owns the pg-boss queue
+# and does the PDF/DOCX extraction + Groq generation off the request path
+# (it cannot run on Vercel serverless). Deploy via Render → New → Blueprint,
+# point it at this repo, then fill in the secret values it asks for once.
+services:
+  - type: worker # Render "Background Worker": kept alive, no public HTTP
+    name: sourcery-worker
+    runtime: node
+    plan: free # if free workers aren't offered in your region, pick "starter"
+    region: oregon
+    branch: main
+    buildCommand: npm ci
+    startCommand: npm run worker:start
+    envVars:
+      # Pin the Node runtime to match local (v22).
+      - key: NODE_VERSION
+        value: "22"
+      # Secrets below are marked sync:false so Render prompts you to enter
+      # their values once in the dashboard — they are never stored in this file.
+      #
+      # Use the Supabase SESSION POOLER (IPv4) connection string here, not the
+      # direct IPv6 database host — Render is IPv4-only.
+      - key: DATABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
