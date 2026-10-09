@@ -22,7 +22,10 @@ function normalizeEmail(formData: FormData): string {
 }
 
 function siteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  // Trim defensively: env values set via CLI/paste can carry a trailing newline
+  // or slash, which would corrupt the redirect URL and make Supabase reject it.
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').trim()
+  return raw.replace(/\/+$/, '')
 }
 
 export async function signUp(formData: FormData): Promise<{ error?: string }> {
@@ -42,9 +45,11 @@ export async function signUp(formData: FormData): Promise<{ error?: string }> {
     email,
     password,
     options: {
-      // mode=confirm tells the callback to verify the address, then send the
-      // user to /login (with a banner) instead of auto-logging-in this device.
-      emailRedirectTo: `${siteUrl()}/auth/callback?mode=confirm`,
+      // No query string on the redirect: Supabase only honors a redirect URL
+      // that EXACTLY matches an allowlist entry, and the old ?mode=confirm query
+      // broke that match (silent fallback to the site root). /auth/callback is
+      // now the confirmation-only callback; recovery uses /auth/reset.
+      emailRedirectTo: `${siteUrl()}/auth/callback`,
       // handle_new_user() mirrors this into profiles.display_name.
       data: { display_name: username },
     },
@@ -87,9 +92,10 @@ export async function requestPasswordReset(
   if (!email || !email.includes('@')) return { error: 'Enter the email for your account.' }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    // The callback route exchanges the code for a recovery session and then
-    // lands on /reset-password (it only allows internal ?next= paths).
-    redirectTo: `${siteUrl()}/auth/callback?next=/reset-password`,
+    // Recovery uses its own query-less path (/auth/reset) so the URL exactly
+    // matches the Supabase redirect allowlist; the route exchanges the code for
+    // a recovery session and lands on /reset-password.
+    redirectTo: `${siteUrl()}/auth/reset`,
   })
   if (error) {
     const friendly = friendlyAuthError(error.message)
