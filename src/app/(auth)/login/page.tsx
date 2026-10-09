@@ -25,7 +25,8 @@ export default async function LoginPage({
           role="status"
           className="mb-4 rounded-xl border border-success/40 bg-success/10 px-4 py-3 text-sm text-success"
         >
-          Email confirmed — you can log in now.
+          <span className="font-semibold">Email verified successfully.</span>{' '}
+          Your account is active — log in below to start studying.
         </div>
       )}
       {sp.error === 'verification' && (

@@ -12,6 +12,11 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // PKCE makes email-confirmation / recovery links redirect with ?code=,
+      // which the /auth/callback route can exchange server-side. Under the
+      // default implicit flow the session lands in the URL #fragment, which a
+      // route handler never receives, so confirmation silently failed.
+      auth: { flowType: 'pkce' },
       cookies: {
         getAll() {
           return cookieStore.getAll()
