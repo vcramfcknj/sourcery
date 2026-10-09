@@ -9,7 +9,7 @@ services:
     name: sourcery-worker
     runtime: node
     plan: free # if free workers aren't offered in your region, pick "starter"
-    region: oregon
+    region: singapore # match the Supabase DB region (ap-southeast-1) to cut latency
     branch: main
     buildCommand: npm ci
     startCommand: npm run worker:start
